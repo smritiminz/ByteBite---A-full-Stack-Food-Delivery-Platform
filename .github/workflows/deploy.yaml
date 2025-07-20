@@ -1,0 +1,31 @@
+name: CI/CD for ByteBite
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build & Push Frontend
+      run: |
+        docker build -t yourdockerhub/bytebite-frontend ./client
+        echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        docker push yourdockerhub/bytebite-frontend
+
+    - name: Build & Push Backend
+      run: |
+        docker build -t yourdockerhub/bytebite-backend ./server
+        docker push yourdockerhub/bytebite-backend
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/
